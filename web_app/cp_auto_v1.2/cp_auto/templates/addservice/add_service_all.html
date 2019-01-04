@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid" style="background-color:#eaebed"/>
+	<br>
+	<h5>Add New Service Object to All Domains</h5>
+	<form method="POST"/>
+		<div class="form-group">
+			{% csrf_token %}
+			{{ form.as_p }}
+			<button type="submit" class="btn btn-primary">Add Service</button>
+			<br><br>
+		</div>
+	</form>
+
+	<!-- For when TCP or UDP individually or when submitted Form is invalid -->
+	{% if success %}
+		<p style="color:blue">{{ success }}</p>
+	{% endif %}
+	{% if error %}
+		<p style="color:red">{{ error }}</p>
+	{% endif %}
+
+	<!-- For when both TCP/UDP -->
+	{% if com_success %}
+		<p style="color:blue">{{ com_success }}</p>
+	{% endif %}
+	{% if gov_success %}
+		<p style="color:blue">{{ gov_success }}</p>
+	{% endif %}
+	{% if com_error %}
+		<p style="color:red">{{ com_error }}</p>
+	{% endif %}
+	{% if gov_error %}
+		<p style="color:red">{{ gov_error }}</p>
+	{% endif %}
+
+</div>
+{% endblock %}

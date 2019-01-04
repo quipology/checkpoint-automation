@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="jumbotron"/>
+	<form method="POST"/>
+		<div class="form-group">
+			{% csrf_token %}
+			{{ form.as_p }}
+			<button type="submit" class="btn btn-primary">Get Sids</button>
+		</div>
+	</form>
+	<br/><br/>
+	<h5>Below are your SID tokens - they are valid for 1 hour:</h5>
+	<br/>
+	<p><em>Commercial Domain Token:</em> <span style="color:blue"><strong>{{ comsid }}</strong></span></p>
+	<p><em>Government Domain Token:</em> <span style="color:blue"><strong>{{ govsid }}</strong></span></p>
+</div>
+{% endblock %}

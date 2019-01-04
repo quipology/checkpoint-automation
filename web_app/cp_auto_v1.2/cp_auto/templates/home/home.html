@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="jumbotron">
+  <h3 >xxxDigital CheckPoint Tool</h3>
+  <p class="lead">This tool is for automating tasks against the production CheckPoint domains. </p>
+  <hr class="my-4">
+  <p>It uses CheckPoint API generated session id tokens to execute various tasks.</p>
+  <p class="lead">
+    <a class="btn btn-primary btn-lg" href="{% url 'gensids' %}" role="button">Click Here to Get Started</a>
+  </p>
+</div>
+{% endblock %}

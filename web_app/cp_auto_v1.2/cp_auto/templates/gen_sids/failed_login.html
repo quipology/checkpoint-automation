@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="jumbotron"/>
+	<form method="POST"/>
+		<div class="form-group">
+			{% csrf_token %}
+			{{ form.as_p }}
+			<button type="submit" class="btn btn-primary">Get Sids</button>
+		</div>
+	</form>
+	<br/><br/>
+	<p style="color:red">{{ error }}</p>
+</div>
+{% endblock %}

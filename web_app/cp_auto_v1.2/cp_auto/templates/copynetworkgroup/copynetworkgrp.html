@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid" style="background-color:#eaebed"/>
+	<br>
+	<h5>Copy Network Group</h5>
+	<form method="POST"/>
+		<div class="form-group">
+			{% csrf_token %}
+			{{ form.as_p }}
+			<button type="submit" class="btn btn-primary">Copy Network Group</button>
+			<br><br>
+		</div>
+	</form>
+	{% if error %}
+		<p style="color:red">{{ error }}</p>
+	{% elif success %}
+		<p style="color:blue">{{ success }}</p>
+	{% endif %}
+</div>
+{% endblock %}

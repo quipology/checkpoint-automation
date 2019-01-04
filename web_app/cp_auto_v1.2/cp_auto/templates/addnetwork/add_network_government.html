@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+      input {
+        margin-bottom:-10px;
+      }
+</style>
+
+<div class="container-fluid" style="background-color:#eaebed"/>
+	<br>
+	<h5>Add New Government Network Object</h5>
+	<form method="POST"/>
+		<div id="app" class="form-group">
+			{% csrf_token %}
+			<!-- <label for="id_com_sid">Government Token:</label>
+			{{ form.com_sid }}<br> -->
+			<label for="id_name">Object Name:</label>
+			{{ form.name }}<br>
+			<label for="id_subnet">Subnet:</label>
+			{{ form.subnet }}<br>
+			<label for="id_subnet_mask">Subnet Mask:</label>
+			{{ form.subnet_mask }}<br>
+			<label for="id_comment">Comment:</label>
+			{{ form.comment }}
+			<hr>
+			<h6><em>Add This New Network to *Existing Group (optional)</em></h6>
+			<label for="id_grp_name">Group Name:</label>
+				{{ form.grp_name }}
+			<!-- <label for="id_add_to_grp">Add to an *existing group</label>
+			{{ form.add_to_grp }}
+			<div id="id_grp_name_div" v-if="addToGrp">
+				<label for="id_grp_name">Group Name:</label>
+				{{ form.grp_name }}
+			</div> -->
+			<br>
+			<button type="submit" class="btn btn-primary">Add Network</button>
+			<br><br>
+		</div>
+	</form>
+	
+	{% if error %}
+		<p style="color:red">{{ error }}</p>
+	{% elif success %}
+		<p style="color:blue">{{ success }}</p>
+	{% endif %}
+</div>
+{% endblock %}
+
+<!-- {% block js %}
+<script>
+	new Vue({
+		delimiters: ['[[', ']]'],
+		el: '#app',
+		data: {
+			addToGrp: false
+		},
+		methods: {
+			addToGrpFunc: function(event){
+				if (event.target.checked === true){
+					this.addToGrp = true;
+				} else {
+					this.addToGrp = false
+				}	
+		}
+	}})
+</script>
+{% endblock %} -->

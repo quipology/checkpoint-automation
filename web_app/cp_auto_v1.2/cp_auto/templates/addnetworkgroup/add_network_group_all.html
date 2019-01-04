@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid" style="background-color:#eaebed"/>
+	<br>
+	<h5>Add New Network Group to All Domains</h5>
+	<form method="POST"/>
+		<div class="form-group">
+			{% csrf_token %}
+			{{ form.as_p }}
+			<button type="submit" class="btn btn-primary">Add Network Group</button>
+			<br><br>
+		</div>
+	</form>
+	{% if com_error %}
+		<p style="color:red">{{ com_error }}</p>
+	{% endif %}
+	{% if gov_error %}
+		<p style="color:red">{{ gov_error }}</p>
+	{% endif %}
+	{% if com_success %}
+		<p style="color:blue">{{ com_success }}</p>
+	{% endif %}
+	{% if gov_success %}
+		<p style="color:blue">{{ gov_success }}</p>
+	{% endif %}	
+	{% if success %}
+		<p style="color:blue">{{ success }}<br>{{ domains }}</p>
+	{% endif %}
+</div>
+{% endblock %}
