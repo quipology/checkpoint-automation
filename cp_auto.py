@@ -26,6 +26,11 @@ a1 - Add New Host Object (To *ALL* Domains)
 a2 - Add New Network Object (To *ALL* Domains)
 a3 - Add New Network Object-Group (To *ALL* Domains)
 a4 - Add New TCP port (To *ALL* Domains)
+---------------------------------------------------------------------
+sh - Show Host Object
+sn - Show Network Object
+---------------------------------------------------------------------
+ceh - Edit Host Object
 
 s - Show All Active User Sessions
 q - Quit
@@ -445,6 +450,36 @@ def main():
 		elif selection.upper() == 'G5':
 			base.list_obj_grps(gov_sid)
 # --------------  List Network Object Groups END ----------------				
+
+#---------------  Show Object BEGIN ------------------------#
+
+		elif selection.upper() == 'SH':
+			domain = input('A) Commercial\nB) Government\n> ')
+			if domain.upper() == 'A':
+				host_name = input('Host Object Name: ')
+				base.show_host(com_sid, host_name)
+			elif domain.upper() == 'B':
+				host_name = input('Host Object Name: ')
+				base.show_host(gov_sid, host_name)
+
+		elif selection.upper() == 'SN':
+			domain = input('A) Commercial\nB) Government\n> ')
+			if domain.upper() == 'A':
+				network_name = input('Network Object Name: ')
+				base.show_host(com_sid, network_name)
+			elif domain.upper() == 'B':
+				network_name = input('Network Object Name: ')
+				base.show_host(gov_sid, network_name)	
+#---------------  Show Object END ------------------------#
+
+#---------------  Edit Host Object BEGIN ------------------------#
+		elif selection.upper() == 'CEH':
+			host_name = input('Host Object Name you want to add to group: ')
+			group_name = input('Name of the Group you want to add host object to: ')
+			base.edit_host(com_sid, host_name, add_group=True, grp_name=group_name)
+			com_task = base.publish_changes(com_sid)
+
+#---------------  Edit Host Object END ------------------------#
 
 		keep_going = input('-' * 40 +'\nHave another task (y/n)?> ')
 		if keep_going.upper() == 'N':

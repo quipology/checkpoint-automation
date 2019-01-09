@@ -113,7 +113,10 @@ def show_host(sid, name):
 
 	response = json.loads(response.text)
 
-	return response['ipv4-address'], response['comments']
+	if not response.get('ipv4-address'): # Object name doesn't exist
+		return None
+	else:
+		return response['ipv4-address'], response['comments']
 
 def show_network(sid, name):
 	# Display details of a network(subnet) object:
@@ -125,7 +128,10 @@ def show_network(sid, name):
 
 	response = json.loads(response.text)
 
-	return response['subnet4'], response['mask-length4'], response['subnet-mask'], response['comments']
+	if not response.get('subnet4'): # Object name doesn't exist
+		return None
+	else:
+		return response['subnet4'], response['mask-length4'], response['subnet-mask'], response['comments']
 
 def show_grp_obj(sid, name):
 	# Displays the details of an object group:
@@ -137,26 +143,28 @@ def show_grp_obj(sid, name):
 	response = json.loads(response.text)
 
 	members = []
-	for i in response['members']:
-		if i['type'] == 'host':
-			member = []
-			details = show_host(sid, i['name'])
-			address = details[0]
-			comments = details[1]
-			member += [i['name'], address, comments]
-			members.append(member)
+	if response.get('members'):
+		for i in response['members']:
+			if i['type'] == 'host':
+				member = []
+				details = show_host(sid, i['name'])
+				address = details[0]
+				comments = details[1]
+				member += [i['name'], address, comments]
+				members.append(member)
 
-		elif i['type'] == 'network':
-			member = []
-			details = show_network(sid, i['name'])
-			subnet = details[0]
-			mask_length = details[1]
-			subnet_mask = details[2]
-			comments = details[3]
-			member += [i['name'], subnet, subnet_mask, comments]
-			members.append(member)
-	return members		
-
+			elif i['type'] == 'network':
+				member = []
+				details = show_network(sid, i['name'])
+				subnet = details[0]
+				mask_length = details[1]
+				subnet_mask = details[2]
+				comments = details[3]
+				member += [i['name'], subnet, subnet_mask, comments]
+				members.append(member)
+		return members		
+	else:
+		return None
 		
 def list_obj_grps(sid):
 	# Displays a list of object groups
@@ -170,6 +178,38 @@ def list_obj_grps(sid):
 
 	for i in response['objects']:
 		print(i['name'])
+
+def edit_host(sid, name, add_group=False, remove_group=False, grp_name=None):
+	# Edit existing host:
+	request_headers = {'Content-Type': 'application/json', 'X-chkp-sid': sid}
+
+	if add_group == True:
+		data = {'name': name, 'groups': {'add': grp_name}}
+	elif remove_group == True:
+		data = {'name': name, 'groups': {'remove': grp_name}}
+
+	response = requests.post(base_url+'set-host', data=json.dumps(data),headers=request_headers, verify=False)
+
+	if response.status_code == 200:
+		return response.status_code
+	else:
+		return response.text
+
+def edit_network(sid, name, add_group=False, remove_group=False, grp_name=None):
+	# Edit existing host:
+	request_headers = {'Content-Type': 'application/json', 'X-chkp-sid': sid}
+
+	if add_group == True:
+		data = {'name': name, 'groups': {'add': grp_name}}
+	elif remove_group == True:
+		data = {'name': name, 'groups': {'remove': grp_name}}
+
+	response = requests.post(base_url+'set-network', data=json.dumps(data),headers=request_headers, verify=False)
+
+	if response.status_code == 200:
+		return response.status_code
+	else:
+		return response.text
 
 def add_host(sid, name, ip_address, comments='', add_to_grp=False, grp_name=None):
 	# Add host object:
@@ -194,13 +234,13 @@ def add_host(sid, name, ip_address, comments='', add_to_grp=False, grp_name=None
 		elif response_data.get('message'):
 			return response_data['message'] # If some other error, return the error message
 		else:
-			return 'Unknown error.'
+			return 'Unknown 400 error.'
 	elif response.status_code == 404:
 		response_data = json.loads(response.text)
 		if response_data.get('message'): # If object group doesn't exist
 			return response_data['message']
 		else:
-			return 'Unknown error.'
+			return 'Unknown 404 error.'
 	else:
 		return 'Unknown error.'
 
@@ -227,13 +267,13 @@ def add_network(sid, name, subnet, subnet_mask, comments='', add_to_grp=False, g
 		elif response_data.get('message'):
 			return response_data['message'] # If some other error, return the error message
 		else:
-			return 'Unknown error.'
+			return 'Unknown 400 error.'
 	elif response.status_code == 404:
 		response_data = json.loads(response.text)
 		if response_data.get('message'): # If object group doesn't exist
 			return response_data['message']
 		else:
-			return 'Unknown error.'
+			return 'Unknown 400 error.'
 	else:
 		return 'Unknown error.'
 
@@ -246,8 +286,8 @@ def add_network_obj_grp(sid, name):
 	response = requests.post(base_url+'add-group', data=json.dumps(data),headers=request_headers, verify=False)
 	
 	if response.status_code == 200:
-		status = response.status_code
-		return status
+		# status = response.status_code
+		return 'success'
 	elif response.status_code == 400:
 		response_data = json.loads(response.text)
 		if response_data.get('warnings'): # If duplicate group error, return warning message
@@ -257,7 +297,7 @@ def add_network_obj_grp(sid, name):
 		elif response_data.get('message'):
 			return response_data['message'] # If some other error, return the error message
 		else:
-			return 'Unknown error.'
+			return 'Unknown 400 error.'
 	else:
 		return 'Unknown error.'
 	
@@ -283,7 +323,7 @@ def add_service_tcp(sid, name, port, comment=None):
 		elif response_data.get('message'):
 			return response_data['message'] # If some other error, return the error message
 		else:
-			return 'Unknown error.'
+			return 'Unknown 400 error.'
 	else:
 		return 'Unknown error.'
 		
@@ -310,6 +350,6 @@ def add_service_udp(sid, name, port, comment=None):
 		elif response_data.get('message'):
 			return response_data['message'] # If some other error, return the error message
 		else:
-			return 'Unknown error.'
+			return 'Unknown 400 error.'
 	else:
 		return 'Unknown error.'

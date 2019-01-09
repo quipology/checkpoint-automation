@@ -115,10 +115,13 @@ def show_host(sid, name):
 	data = {'name': name}
 
 	response = requests.post(base_url+'show-host', data=json.dumps(data), headers=request_headers, verify=False)
-
+	
 	response = json.loads(response.text)
 
-	return response['ipv4-address'], response['comments']
+	if not response.get('ipv4-address'): # Object name doesn't exist
+		return None
+	else:
+		return response['ipv4-address'], response['comments']
 
 def show_network(sid, name):
 	# Display details of a network(subnet) object:
@@ -130,7 +133,10 @@ def show_network(sid, name):
 
 	response = json.loads(response.text)
 
-	return response['subnet4'], response['mask-length4'], response['subnet-mask'], response['comments']
+	if not response.get('subnet4'): # Object name doesn't exist
+		return None
+	else:
+		return response['subnet4'], response['mask-length4'], response['subnet-mask'], response['comments']
 
 def show_grp_obj(sid, name):
 	# Displays the details of an object group:
@@ -146,31 +152,35 @@ def show_grp_obj(sid, name):
 	print('--------------')
 	total_members = len(response['members'])
 	members = []
-	for i in response['members']:
-		if i['type'] == 'host':
-			member = []
-			details = show_host(sid, i['name'])
-			address = details[0]
-			comments = details[1]
-			print('{} - {}'.format(i['name'], i['type']))
-			print('\t{}'.format(comments))
-			member += [i['name'], address, comments]
-			members.append(member)
+	if response.get('members'):
+		for i in response['members']:
+			if i['type'] == 'host':
+				member = []
+				details = show_host(sid, i['name'])
+				address = details[0]
+				comments = details[1]
+				print('{} - {}'.format(i['name'], i['type']))
+				print('\t{}'.format(comments))
+				member += [i['name'], address, comments]
+				members.append(member)
 
-		elif i['type'] == 'network':
-			member = []
-			details = show_network(sid, i['name'])
-			subnet = details[0]
-			mask_length = details[1]
-			subnet_mask = details[2]
-			comments = details[3]
-			print('{} - {}'.format(i['name'], i['type']))
-			print('\t{}/{} ({})'.format(subnet, mask_length, subnet_mask))
-			print('\tComments: {}\n'.format(comments))
-			member += [i['name'], subnet, subnet_mask, comments]
-			members.append(member)
-	print('Total members: {}'.format(total_members))
-	return members		
+			elif i['type'] == 'network':
+				member = []
+				details = show_network(sid, i['name'])
+				subnet = details[0]
+				mask_length = details[1]
+				subnet_mask = details[2]
+				comments = details[3]
+				print('{} - {}'.format(i['name'], i['type']))
+				print('\t{}/{} ({})'.format(subnet, mask_length, subnet_mask))
+				print('\tComments: {}\n'.format(comments))
+				member += [i['name'], subnet, subnet_mask, comments]
+				members.append(member)
+		print('Total members: {}'.format(total_members))
+		print(response)
+		return members
+	else:
+		return None		
 
 		
 def list_obj_grps(sid):
@@ -185,6 +195,25 @@ def list_obj_grps(sid):
 
 	for i in response['objects']:
 		print(i['name'])
+
+def edit_host(sid, name, add_group=False, remove_group=False, grp_name=None):
+	# Edit existing host:
+	request_headers = {'Content-Type': 'application/json', 'X-chkp-sid': sid}
+
+	if add_group == True:
+		data = {'name': name, 'groups': {'add': grp_name}}
+	elif remove_group == True:
+		data = {'name': name, 'groups': {'remove': grp_name}}
+
+	response = requests.post(base_url+'set-host', data=json.dumps(data),headers=request_headers, verify=False)
+
+	if response.status_code == 200:
+		print('success')
+		print(response.text)
+	elif response.status_code == 400:
+		print(response.text)
+	else:
+		print(response.text)
 
 def add_host(sid, name, ip_address, comments='', add_to_grp=False, grp_name=None):
 	# Add host object:
@@ -245,6 +274,8 @@ def add_network_obj_grp(sid, name):
 		return status
 	else:
 		print('Something went wrong - maybe object group already exist')
+		print(response.status_code)
+		print(response.text)
 	
 def add_service_tcp(sid, name, port):
 	# Add TCP port:

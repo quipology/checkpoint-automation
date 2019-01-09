@@ -557,43 +557,171 @@ def copy_network_grp_commercial(request):
 
 			members = web_base.show_grp_obj(source_sid, grp_name)
 			if members:
+				
+				# Objects that had issues and will require manual add
+				issues = []
+
+				# Create group:
 				added_grp_status = web_base.add_network_obj_grp(com_sid, grp_name)
-				if added_grp_status == 200:
+
+				# If object group already exists:
+				if 'exists' in added_grp_status:
+
+					# Loop through each member of the provided object group and create member if it does NOT exist and add to copied group:
 					for i in members:
+
+						# @@ Host Object @@
 						if len(i) == 3:
 							name, ip_address, comments = i[0], i[1], i[2]
-							status_code = web_base.add_host(com_sid, name, ip_address, comments=comments, add_to_grp=True, grp_name=grp_name)
-							if status_code == 200:
-								continue
+							
+							# Check to see if host object already exist:
+							host_exist = web_base.show_host(com_sid, name)
+							
+							# Host object does not exist so create host object:
+							if host_exist == None:
+								status_code = web_base.add_host(com_sid, name, ip_address, comments=comments, add_to_grp=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(com_sid)
+									continue
+								else:
+									issues.append(name)
+									web_base.discard_changes(com_sid)
+							
+							# Host already exists - add to the group:
 							else:
-								web_base.discard_changes(com_sid)
-								error = 'Something went wrong with adding {} to group {} - a manual add will be required'.format(name, grp_name)
-								context = {'form': form, 'error': error}
-								return render(request, 'copynetworkgroup/commercial_copynetworkgrp.html', context)
+								status_code = web_base.edit_host(com_sid, name, add_group=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(com_sid)
+								else:
+									issues.append(name)
+									web_base.discard_changes(com_sid)
 
+						# @@ Network Object @@
 						elif len(i) == 4:
 							name, subnet, subnet_mask, comments = i[0], i[1], i[2], i[3]
-							status_code = web_base.add_network(com_sid, name, subnet, subnet_mask, comments=comments, add_to_grp=True, grp_name=grp_name)
-							if status_code == 200:
-								continue
+
+							# Check to see if network object already exist:
+							network_exist = web_base.show_network(com_sid, name)
+
+							# Network object does not exist so create network object:
+							if network_exist == None:
+								status_code = web_base.add_network(com_sid, name, subnet, subnet_mask, comments=comments, add_to_grp=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(com_sid)
+									continue
+								else:
+									issues.append(name)
+									web_base.discard_changes(com_sid)
+
+							# Network object already exists - add to the group:
 							else:
-								web_base.discard_changes(com_sid)
-								error = 'Something went wrong with adding {} to group {} - a manual add will be required'.format(name, grp_name)
-								context = {'form': form, 'error': error}
-								return render(request, 'copynetworkgroup/commercial_copynetworkgrp.html', context)
+								status_code = web_base.edit_network(com_sid, name, add_group=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(com_sid)
+								else:
+									issues.append(name)
+									web_base.discard_changes(com_sid)
+					
+					# One final saving of changes:
 					web_base.publish_changes(com_sid)
-					success = 'Network Group {} copied successfully!'.format(grp_name)
+
+					# If there were any objects with issues:
+					if issues:
+						success = 'Network Group {} copied, but the following objects had issues and will require a manual add: {}'.format(grp_name, issues)
+					# No issues:
+					else:
+						success = 'Network Group {} copied successfully!'.format(grp_name)
+					
 					context = {'form': form, 'success': success}
 					return render(request, 'copynetworkgroup/commercial_copynetworkgrp.html', context)
+
+				# If object group creation successful:
+				elif added_grp_status == 'success':
+
+					# Loop through each member of the provided object group and create member if it does NOT exist and add to copied group:
+					for i in members:
+
+						# @@ Host Object @@
+						if len(i) == 3:
+							name, ip_address, comments = i[0], i[1], i[2]
+							
+							# Check to see if host object already exist:
+							host_exist = web_base.show_host(com_sid, name)
+							
+							# Host object does not exist so create host object:
+							if host_exist == None:
+								status_code = web_base.add_host(com_sid, name, ip_address, comments=comments, add_to_grp=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(com_sid)
+									continue
+								else:
+									issues.append(name)
+									web_base.discard_changes(com_sid)
+							
+							# Host already exists - add to the group:
+							else:
+								status_code = web_base.edit_host(com_sid, name, add_group=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(com_sid)
+								else:
+									issues.append(name)
+									web_base.discard_changes(com_sid)
+
+						# @@ Network Object @@
+						elif len(i) == 4:
+							name, subnet, subnet_mask, comments = i[0], i[1], i[2], i[3]
+
+							# Check to see if network object already exist:
+							network_exist = web_base.show_network(com_sid, name)
+
+							# Network object does not exist so create network object:
+							if network_exist == None:
+								status_code = web_base.add_network(com_sid, name, subnet, subnet_mask, comments=comments, add_to_grp=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(com_sid)
+									continue
+								else:
+									issues.append(name)
+									web_base.discard_changes(com_sid)
+
+							# Network object already exists - add to the group:
+							else:
+								status_code = web_base.edit_network(com_sid, name, add_group=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(com_sid)
+								else:
+									issues.append(name)
+									web_base.discard_changes(com_sid)
+
+					# One final saving of changes:
+					web_base.publish_changes(com_sid)
+
+					# If there were any objects with issues:
+					if issues:
+						success = 'Network Group {} copied, but the following objects had issues and will require a manual add: {}'.format(grp_name, issues)
+					# No issues:
+					else:
+						success = 'Network Group {} copied successfully!'.format(grp_name)
+					
+					context = {'form': form, 'success': success}
+					return render(request, 'copynetworkgroup/commercial_copynetworkgrp.html', context)
+
+
+
+				# Object group does NOT currently exist AND unable to create object group:
 				else:
 					web_base.discard_changes(com_sid)
-					error = 'Failed to create Network Group to Government Domain.\nTry generating some fresh tokens.' 
+					error = 'Failed to create Network Group on destination domain - {}'.format(added_grp_status) 
 					context = {'form': form, 'error': error}
 					return render(request, 'copynetworkgroup/commercial_copynetworkgrp.html', context)
+			
+			# Provided object group does NOT have any memebers:
 			else:
-				error = 'No members in Network Object-Group {}.'.format(grp_name) 
+				error = 'No members in Network Object-Group {} or group does not exist on source domain.'.format(grp_name) 
 				context = {'form': form, 'error': error}
 				return render(request, 'copynetworkgroup/commercial_copynetworkgrp.html', context)
+		
+		# User form input is invalid:
 		else:
 			error = 'Input invalid.' 
 			context = {'form': form, 'error': error}
@@ -610,13 +738,13 @@ def copy_network_grp_government(request):
 		form = CopyNetworkGroupGovernment()
 		context = {'form': form}
 		return render(request, 'copynetworkgroup/government_copynetworkgrp.html', context)
-	
+
 	elif request.method == 'POST':
 		form = CopyNetworkGroupGovernment(request.POST)
 		if form.is_valid():
-			gov_sid = request.session.get('gov_sid')
 			com_sid = request.session.get('com_sid')
-			
+			gov_sid = request.session.get('gov_sid')
+
 			domain = form.cleaned_data.get('domain')
 			grp_name = form.cleaned_data.get('grp_name')
 
@@ -626,43 +754,171 @@ def copy_network_grp_government(request):
 
 			members = web_base.show_grp_obj(source_sid, grp_name)
 			if members:
+				
+				# Objects that had issues and will require manual add
+				issues = []
+
+				# Create group:
 				added_grp_status = web_base.add_network_obj_grp(gov_sid, grp_name)
-				if added_grp_status == 200:
+
+				# If object group already exists:
+				if 'exists' in added_grp_status:
+
+					# Loop through each member of the provided object group and create member if it does NOT exist and add to copied group:
 					for i in members:
+
+						# @@ Host Object @@
 						if len(i) == 3:
 							name, ip_address, comments = i[0], i[1], i[2]
-							status_code = web_base.add_host(gov_sid, name, ip_address, comments=comments, add_to_grp=True, grp_name=grp_name)
-							if status_code == 200:
-								continue
+							
+							# Check to see if host object already exist:
+							host_exist = web_base.show_host(gov_sid, name)
+							
+							# Host object does not exist so create host object:
+							if host_exist == None:
+								status_code = web_base.add_host(gov_sid, name, ip_address, comments=comments, add_to_grp=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(gov_sid)
+									continue
+								else:
+									issues.append(name)
+									web_base.discard_changes(gov_sid)
+							
+							# Host already exists - add to the group:
 							else:
-								web_base.discard_changes(gov_sid)
-								error = 'Something went wrong with adding {} to group {} - a manual add will be required'.format(name, grp_name)
-								context = {'form': form, 'error': error}
-								return render(request, 'copynetworkgroup/government_copynetworkgrp.html', context)
+								status_code = web_base.edit_host(gov_sid, name, add_group=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(gov_sid)
+								else:
+									issues.append(name)
+									web_base.discard_changes(gov_sid)
 
+						# @@ Network Object @@
 						elif len(i) == 4:
 							name, subnet, subnet_mask, comments = i[0], i[1], i[2], i[3]
-							status_code = web_base.add_network(gov_sid, name, subnet, subnet_mask, comments=comments, add_to_grp=True, grp_name=grp_name)
-							if status_code == 200:
-								continue
+
+							# Check to see if network object already exist:
+							network_exist = web_base.show_network(gov_sid, name)
+
+							# Network object does not exist so create network object:
+							if network_exist == None:
+								status_code = web_base.add_network(gov_sid, name, subnet, subnet_mask, comments=comments, add_to_grp=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(gov_sid)
+									continue
+								else:
+									issues.append(name)
+									web_base.discard_changes(gov_sid)
+
+							# Network object already exists - add to the group:
 							else:
-								web_base.discard_changes(gov_sid)
-								error = 'Something went wrong with adding {} to group {} - a manual add will be required'.format(name, grp_name)
-								context = {'form': form, 'error': error}
-								return render(request, 'copynetworkgroup/government_copynetworkgrp.html', context)
+								status_code = web_base.edit_network(gov_sid, name, add_group=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(gov_sid)
+								else:
+									issues.append(name)
+									web_base.discard_changes(gov_sid)
+					
+					# One final saving of changes:
 					web_base.publish_changes(gov_sid)
-					success = 'Network Group {} copied successfully!'.format(grp_name)
+
+					# If there were any objects with issues:
+					if issues:
+						success = 'Network Group {} copied, but the following objects had issues and will require a manual add: {}'.format(grp_name, issues)
+					# No issues:
+					else:
+						success = 'Network Group {} copied successfully!'.format(grp_name)
+					
 					context = {'form': form, 'success': success}
 					return render(request, 'copynetworkgroup/government_copynetworkgrp.html', context)
+
+				# If object group creation successful:
+				elif added_grp_status == 'success':
+					
+					# Loop through each member of the provided object group and create member if it does NOT exist and add to copied group:
+					for i in members:
+
+						# @@ Host Object @@
+						if len(i) == 3:
+							name, ip_address, comments = i[0], i[1], i[2]
+							
+							# Check to see if host object already exist:
+							host_exist = web_base.show_host(gov_sid, name)
+							
+							# Host object does not exist so create host object:
+							if host_exist == None:
+								status_code = web_base.add_host(gov_sid, name, ip_address, comments=comments, add_to_grp=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(gov_sid)
+									continue
+								else:
+									issues.append(name)
+									web_base.discard_changes(gov_sid)
+							
+							# Host already exists - add to the group:
+							else:
+								status_code = web_base.edit_host(gov_sid, name, add_group=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(gov_sid)
+								else:
+									issues.append(name)
+									web_base.discard_changes(gov_sid)
+
+						# @@ Network Object @@
+						elif len(i) == 4:
+							name, subnet, subnet_mask, comments = i[0], i[1], i[2], i[3]
+
+							# Check to see if network object already exist:
+							network_exist = web_base.show_network(gov_sid, name)
+
+							# Network object does not exist so create network object:
+							if network_exist == None:
+								status_code = web_base.add_network(gov_sid, name, subnet, subnet_mask, comments=comments, add_to_grp=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(gov_sid)
+									continue
+								else:
+									issues.append(name)
+									web_base.discard_changes(gov_sid)
+
+							# Network object already exists - add to the group:
+							else:
+								status_code = web_base.edit_network(gov_sid, name, add_group=True, grp_name=grp_name)
+								if status_code == 200:
+									web_base.publish_changes(gov_sid)
+								else:
+									issues.append(name)
+									web_base.discard_changes(gov_sid)
+
+					# One final saving of changes:
+					web_base.publish_changes(gov_sid)
+
+					# If there were any objects with issues:
+					if issues:
+						success = 'Network Group {} copied, but the following objects had issues and will require a manual add: {}'.format(grp_name, issues)
+					# No issues:
+					else:
+						success = 'Network Group {} copied successfully!'.format(grp_name)
+					
+					context = {'form': form, 'success': success}
+					return render(request, 'copynetworkgroup/government_copynetworkgrp.html', context)
+
+
+
+				# Object group does NOT currently exist AND unable to create object group:
 				else:
 					web_base.discard_changes(gov_sid)
-					error = 'Failed to create Network Group to Government Domain.\nTry generating some fresh tokens.' 
+					error = 'Failed to create Network Group on destination domain - {}'.format(added_grp_status) 
 					context = {'form': form, 'error': error}
 					return render(request, 'copynetworkgroup/government_copynetworkgrp.html', context)
+			
+			# Provided object group does NOT have any memebers:
 			else:
-				error = 'No members in Network Object-Group {}.'.format(grp_name) 
+				error = 'No members in Network Object-Group {} or group does not exist on source domain.'.format(grp_name) 
 				context = {'form': form, 'error': error}
-				return render(request, 'copynetworkgroup/copygovernment_copynetworkgrpnetworkgrp.html', context)
+				return render(request, 'copynetworkgroup/government_copynetworkgrp.html', context)
+		
+		# User form input is invalid:
 		else:
 			error = 'Input invalid.' 
 			context = {'form': form, 'error': error}
